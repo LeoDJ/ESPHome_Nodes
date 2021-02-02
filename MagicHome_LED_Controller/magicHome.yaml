@@ -1,0 +1,124 @@
+esphome:
+  name: magicHome
+  platform: ESP8266
+  board: esp01_1m
+  includes:
+    - virtualAddressableLight.h
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_pass
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "MagicHome Fallback Hotspot"
+    password: "12345678"
+
+captive_portal:
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+
+ota:
+
+
+# interval needed for a rainbow effect on a simple RGB LED strip
+interval:
+  - interval: 1s
+    then:
+      lambda: |-
+        if(id(simple_rgb_strip).get_effect_name().compare("Rainbow") == 0) {
+          id(simple_rgb_strip).set_gamma_correct(1.0);
+        }
+        else {
+          id(simple_rgb_strip).set_gamma_correct(2.0);
+        }
+
+wled:
+
+
+light:
+  - platform: custom
+    lambda: |-
+      auto light_out = new VirtualAddressableLight(id(simple_rgb_strip));
+      App.register_component(light_out);
+      return {light_out};
+    lights:
+      - name: "Virtual ARGB Strip"
+        default_transition_length: 0s
+        gamma_correct: 1.0
+        effects: 
+          - wled:
+          - addressable_rainbow:
+              speed: 10
+              width: 500
+  - platform: rgbw
+    name: "RGB Strip"
+    id: "simple_rgb_strip"
+    red: red_channel
+    green: green_channel
+    blue: blue_channel
+    white: white_channel
+    gamma_correct: 2.0
+    on_turn_on:
+      - lambda: |-
+          id(simple_rgb_strip).set_gamma_correct(2.0);
+    effects:
+      - lambda:
+          name: Rainbow
+          update_interval: 5s
+          lambda: |-
+            static int state = 0;
+            auto call = id(simple_rgb_strip).turn_on();
+            call.set_transition_length(5000);
+            id(simple_rgb_strip).set_gamma_correct(1.0);
+            if (state == 0) {
+              call.set_rgb(1.0, 0.0, 0.0);
+            } else if (state == 1) {
+              call.set_rgb(0.0, 1.0, 0.0);
+            } else if (state == 2) {
+              call.set_rgb(0.0, 0.0, 1.0);
+            }
+            call.set_publish(false);
+            call.perform();
+            state += 1;
+            if (state == 3)
+              state = 0;
+      - strobe:
+          name: "RGB Jump"
+          colors:
+            - red: 100%
+              green: 0%
+              blue: 0%
+              duration: 364ms # 165 BPM (Caramelldansen)
+            - red: 0%
+              green: 100%
+              blue: 0%
+              duration: 364ms
+            - red: 0%
+              green: 0%
+              blue: 100%
+              duration: 364ms
+      - flicker:
+      - random:
+          name: "Fast Random Colors"
+          transition_length: 4s
+          update_interval: 5s
+
+# Pinout: https://tasmota.github.io/docs/devices/MagicHome-LED-strip-controller/
+output:
+  - platform: esp8266_pwm
+    id: red_channel
+    pin: GPIO14
+  - platform: esp8266_pwm
+    id: green_channel
+    pin: GPIO5
+  - platform: esp8266_pwm
+    id: blue_channel
+    pin: GPIO12
+  - platform: esp8266_pwm
+    id: white_channel
+    pin: GPIO13
