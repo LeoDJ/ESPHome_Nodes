@@ -1,0 +1,50 @@
+esphome:
+  name: mhz19_sensor
+  platform: ESP32
+  board: wemos_d1_mini32
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_pass
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "MHZ19 Fallback Hotspot"
+    password: "1234567890"
+
+captive_portal:
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+
+ota:
+
+uart:
+  rx_pin: GPIO16
+  tx_pin: GPIO17
+  baud_rate: 9600
+  id: mhz19_uart
+
+sensor:
+  - platform: mhz19
+    id: mhz19_id
+    co2:
+      name: "MH-Z19 CO2"
+    temperature:
+      name: "MH-Z19 Temperature"
+    update_interval: 60s
+    automatic_baseline_calibration: false
+    uart_id: mhz19_uart
+
+switch:
+  # expose a switch for doing zero calibration
+  - platform: template
+    name: "MH-Z19 Zero Calibration"
+    id: zero_calibration_switch
+    turn_on_action:
+      - mhz19.calibrate_zero: mhz19_id
+      - delay: 500ms
+      - switch.turn_off: zero_calibration_switch
