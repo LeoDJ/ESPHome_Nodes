@@ -33,11 +33,20 @@ uart:
 sensor:
 - platform: custom
   lambda: |-
-    auto cm1106 = new CM1106Component(id(cm1106_uart), 10000);
-    App.register_component(cm1106);
-    return {cm1106->co2_sensor};
+    auto cm1106Sensor = new CM1106Sensor(id(cm1106_uart), 10000);
+    App.register_component(cm1106Sensor);
+    return {cm1106Sensor};
   sensors:
   - name: "CO₂ Sensor"
     accuracy_decimals: 0
     unit_of_measurement: "ppm"
-    icon: "mdi:molecule-co2" 
+    icon: "mdi:molecule-co2"
+
+switch:
+- platform: custom
+  lambda: |-
+    auto cm1106Calib = new CM1106CalibrateSwitch(id(cm1106_uart));
+    App.register_component(cm1106Calib);
+    return {cm1106Calib};
+  switches:
+  - name: "CM1106 Zero Calibration"
