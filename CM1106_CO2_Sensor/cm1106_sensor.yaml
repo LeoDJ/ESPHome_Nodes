@@ -1,0 +1,43 @@
+esphome:
+  name: cm1106_sensor
+  platform: ESP32
+  board: wemos_d1_mini32
+  includes:
+    - "cm1106.h"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_pass
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "CM1106 Fallback Hotspot"
+    password: "1234567890"
+
+captive_portal:
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+
+ota:
+
+uart:
+  rx_pin: GPIO16
+  tx_pin: GPIO17
+  baud_rate: 9600
+  id: cm1106_uart
+
+sensor:
+- platform: custom
+  lambda: |-
+    auto cm1106 = new CM1106Component(id(cm1106_uart), 10000);
+    App.register_component(cm1106);
+    return {cm1106->co2_sensor};
+  sensors:
+  - name: "CO₂ Sensor"
+    accuracy_decimals: 0
+    unit_of_measurement: "ppm"
+    icon: "mdi:molecule-co2" 
