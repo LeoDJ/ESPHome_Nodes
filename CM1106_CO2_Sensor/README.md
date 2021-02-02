@@ -11,3 +11,8 @@ Connect the CM1106 sensor to the ESP32 as follows:
 - 5V -> 5V
 
 I implemented CM1106 UART protocol as described in the [sensor datasheet](https://en.gassensor.com.cn/Product_files/Specifications/CM1106-C%20Single%20Beam%20NDIR%20CO2%20Sensor%20Module%20Specification.pdf).
+
+### Zero Calibration
+To calibrate the sensor baseline you need to place it outside in the open air for at least 2-5 minutes. Then you can activate the Zero Calibration Switch and the sensor will remember the measured value as 400ppm.
+
+As long as you don't live in a very polluted city this should be accurate enough.
