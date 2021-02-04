@@ -25,88 +25,90 @@ api:
 ota:
 
 
-# interval needed for a rainbow effect on a simple RGB LED strip
+# poll the currently active effect and set the gamma to 1.0, otherwise fade animations look weird
+# sadly I know of no better way to trigger if a specific effect was activated
 interval:
   - interval: 1s
     then:
       lambda: |-
-        if(id(simple_rgb_strip).get_effect_name().compare("Rainbow") == 0) {
-          id(simple_rgb_strip).set_gamma_correct(1.0);
+        auto effect = id(led_strip).get_effect_name();
+        if(effect.compare("Rainbow") == 0 || effect.compare("WLED") == 0 || effect.compare("Better Rainbow") == 0) {
+          id(led_strip).set_gamma_correct(1.0);
         }
         else {
-          id(simple_rgb_strip).set_gamma_correct(2.0);
+          id(led_strip).set_gamma_correct(2.0);
         }
 
 wled:
 
-
 light:
   - platform: custom
     lambda: |-
-      auto light_out = new VirtualAddressableLight(id(simple_rgb_strip));
+      auto light_out = new VirtualAddressableLight(id(simple_rgbw_strip));
       App.register_component(light_out);
       return {light_out};
     lights:
-      - name: "Virtual ARGB Strip"
-        default_transition_length: 0s
-        gamma_correct: 1.0
+      - name: "LED Strip"
+        id: "led_strip"
+        default_transition_length: 1s
+        gamma_correct: 2.0
+        on_turn_on: # reset gamma to 2 faster
+        - lambda: |-
+            id(led_strip).set_gamma_correct(2.0);
         effects: 
-          - wled:
-          - addressable_rainbow:
-              speed: 10
+          - lambda:
+              name: Better Rainbow
+              update_interval: 5s
+              lambda: |-
+                static int state = 0;
+                auto call = id(led_strip).turn_on();
+                call.set_transition_length(5000);
+                id(led_strip).set_gamma_correct(1.0);
+                if (state == 0) {
+                  call.set_rgb(1.0, 0.0, 0.0);
+                } else if (state == 1) {
+                  call.set_rgb(0.0, 1.0, 0.0);
+                } else if (state == 2) {
+                  call.set_rgb(0.0, 0.0, 1.0);
+                }
+                call.set_publish(false);
+                call.perform();
+                state += 1;
+                if (state == 3)
+                  state = 0;
+          - addressable_rainbow: # the fading of this animations sucks for some reason, still left it in tho
+              speed: 5
               width: 500
+          - strobe:
+              name: "RGB Jump"
+              colors:
+                - red: 100%
+                  green: 0%
+                  blue: 0%
+                  duration: 364ms # 165 BPM (Caramelldansen)
+                - red: 0%
+                  green: 100%
+                  blue: 0%
+                  duration: 364ms
+                - red: 0%
+                  green: 0%
+                  blue: 100%
+                  duration: 364ms
+          - random:
+              name: "Fast Random Colors"
+              transition_length: 4s
+              update_interval: 5s
+          - flicker:
+          - wled:
+          
   - platform: rgbw
-    name: "RGB Strip"
-    id: "simple_rgb_strip"
+    id: "simple_rgbw_strip"
     red: red_channel
     green: green_channel
     blue: blue_channel
     white: white_channel
-    gamma_correct: 2.0
-    on_turn_on:
-      - lambda: |-
-          id(simple_rgb_strip).set_gamma_correct(2.0);
-    effects:
-      - lambda:
-          name: Rainbow
-          update_interval: 5s
-          lambda: |-
-            static int state = 0;
-            auto call = id(simple_rgb_strip).turn_on();
-            call.set_transition_length(5000);
-            id(simple_rgb_strip).set_gamma_correct(1.0);
-            if (state == 0) {
-              call.set_rgb(1.0, 0.0, 0.0);
-            } else if (state == 1) {
-              call.set_rgb(0.0, 1.0, 0.0);
-            } else if (state == 2) {
-              call.set_rgb(0.0, 0.0, 1.0);
-            }
-            call.set_publish(false);
-            call.perform();
-            state += 1;
-            if (state == 3)
-              state = 0;
-      - strobe:
-          name: "RGB Jump"
-          colors:
-            - red: 100%
-              green: 0%
-              blue: 0%
-              duration: 364ms # 165 BPM (Caramelldansen)
-            - red: 0%
-              green: 100%
-              blue: 0%
-              duration: 364ms
-            - red: 0%
-              green: 0%
-              blue: 100%
-              duration: 364ms
-      - flicker:
-      - random:
-          name: "Fast Random Colors"
-          transition_length: 4s
-          update_interval: 5s
+    gamma_correct: 1.0
+    internal: true # already implicitly set to true because of no name tag
 
 # Pinout: https://tasmota.github.io/docs/devices/MagicHome-LED-strip-controller/
 output:

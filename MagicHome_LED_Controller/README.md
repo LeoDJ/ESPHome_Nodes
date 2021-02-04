@@ -6,7 +6,7 @@ This node includes my `virtualAddressableLight` to use all the addressable LED e
 
 You need to place the `virtualAddressableLight.h` file into the esphome folder.
 
-Currently both light devices are exposed, the real one and the virtual one. I still need to merge all animations I implemented on the real, simple RGB strip inside the virtual one so I can make the real one internal and control everything with the virtual device.
+This node mainly adds WLED support to simple RGB strips, which wouldn't be possible without the virtualization layer.
 
 ## Magic Home Controller Connections
 To flash the MagicHome controller the first time, you need to open it and solder some wires to it. After that you can upload any future updates via OTA. The [Tasmota Documentation](https://tasmota.github.io/docs/devices/MagicHome-LED-strip-controller/) has a nice connection diagram and uploading instructions.
