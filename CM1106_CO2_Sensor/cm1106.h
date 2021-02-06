@@ -10,8 +10,8 @@ class CM1106 : public UARTDevice {
     void setCo2CalibValue(uint16_t ppm = 400) {
         uint8_t cmd[6];
         memcpy(cmd, CM1106_CMD_SET_CO2_CALIB, sizeof(cmd));
-        cmd[3] = ppm >> 8;
-        cmd[4] = ppm & 0xFF;
+        CM1106_CMD_SET_CO2_CALIB[3] = ppm >> 8;
+        CM1106_CMD_SET_CO2_CALIB[4] = ppm & 0xFF;
         uint8_t response[4] = {0};
         bool success = sendUartCommand(CM1106_CMD_SET_CO2_CALIB, sizeof(CM1106_CMD_SET_CO2_CALIB), response, sizeof(response));
 
